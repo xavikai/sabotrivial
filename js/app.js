@@ -705,7 +705,7 @@
   function rulesHTML() {
     const sq = Object.entries(E.SQUARES).filter(([k]) => !['start'].includes(k)).map(([k, s]) => `<li><span>${s.emoji}</span><b>${s.name}</b> ${s.desc}</li>`).join('');
     const cards = Object.values(E.CARDS).map(c => `<li><span>${c.emoji}</span><b>${c.name}</b> ${c.desc}</li>`).join('');
-    const cats = Object.values(E.CATS).map(c => `<span class="catpill" style="--cc:${c.color}">${c.emoji} ${c.name}</span>`).join('');
+    const cats = E.CAT_KEYS.map(k => E.CATS[k]).map(c => `<span class="catpill" style="--cc:${c.color}">${c.emoji} ${c.name}</span>`).join('');
     return `<h2>📖 Com es juga</h2>
       <div class="rules">
       <p>Cada jugador tria el seu <b>nivell</b> (🐣 Petit, 🦊 Mitjà o 🧠 Expert) i sempre rep preguntes del seu nivell. Així petits i grans poden competir de tu a tu!</p>

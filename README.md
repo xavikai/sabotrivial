@@ -23,6 +23,7 @@ Tothom respon alhora la seva pregunta. Punts per encert i per rapidesa, bonus pe
 - Web estàtica (HTML + CSS + JavaScript, sense compilació), allotjada a GitHub Pages.
 - El joc en línia funciona amb [PeerJS](https://peerjs.com/) (WebRTC): els mòbils es connecten directament al dispositiu de l'amfitrió. No cal cap servidor propi.
 - L'amfitrió guarda la partida: ha de mantenir la pantalla oberta (millor un ordinador o una tauleta). Si es recarrega la pàgina, la partida es pot reprendre des de l'inici.
+- Les preguntes d'actualitat (categoria 📰) són a `js/news.js`, agrupades per mes; s'hi afegeixen cada mes i el joc només fa servir les dels últims 6 mesos.
 - Les preguntes són a `js/questions.js`, una per línia: `Pregunta|Correcta|Incorrecta|Incorrecta|Incorrecta`. Afegir-ne és tan fàcil com escriure línies noves.
 
 ## Proves

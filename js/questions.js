@@ -413,6 +413,25 @@ Quina tennista catalana va guanyar Roland Garros el 1989?|Arantxa Sánchez Vicar
     }
   }
 
+  // Actualitat: només els últims 6 mesos, i només si hi ha prou preguntes a cada nivell
+  let NEWS = null;
+  try { NEWS = (typeof module !== 'undefined' && module.exports) ? require('./news.js') : root.NEWS; } catch (e) { }
+  if (NEWS) {
+    const d = new Date(); d.setMonth(d.getMonth() - 6);
+    const cutoff = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    const act = { 1: [], 2: [], 3: [] };
+    for (const month of Object.keys(NEWS).sort()) {
+      if (month < cutoff) continue;
+      for (const lvl of [1, 2, 3]) {
+        String(NEWS[month][lvl] || '').split('\n').map(l => l.trim()).filter(Boolean).forEach((line, i) => {
+          const parts = line.split('|').map(s => s.trim());
+          if (parts.length === 5) act[lvl].push({ id: `act${lvl}-${month}-${i}`, q: parts[0], a: parts[1], w: parts.slice(2) });
+        });
+      }
+    }
+    if ([1, 2, 3].every(l => act[l].length >= 4)) BANK.act = act;
+  }
+
   if (typeof module !== 'undefined' && module.exports) module.exports = BANK;
   else root.QUESTIONS = BANK;
 })(typeof window !== 'undefined' ? window : globalThis);

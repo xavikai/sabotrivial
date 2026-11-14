@@ -12,9 +12,10 @@
     cie: { name: 'Ciència i Natura', emoji: '🔬', color: '#2DB36A' },
     art: { name: 'Art i Lletres', emoji: '🎨', color: '#9B59E0' },
     ent: { name: 'Pelis, Música i Jocs', emoji: '🎬', color: '#EE5A9C' },
-    esp: { name: 'Esports i Lleure', emoji: '⚽', color: '#F28A30' }
+    esp: { name: 'Esports i Lleure', emoji: '⚽', color: '#F28A30' },
+    act: { name: 'Actualitat', emoji: '📰', color: '#16A6A6' }
   };
-  const CAT_KEYS = Object.keys(CATS);
+  const CAT_KEYS = Object.keys(CATS).filter(k => QUESTIONS[k]);
 
   const SQUARES = {
     start: { emoji: '🏁', name: 'Sortida', desc: 'Aquí comença tot.' },
