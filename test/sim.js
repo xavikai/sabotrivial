@@ -13,7 +13,7 @@ function sim(mode, local, seedGames=200){
       if(S.step==='pre'){
         if(!S.cardUsed && cur.cards.length && Math.random()<0.5){
           const c=cur.cards.find(c=>E.CARDS[c].kind!=='passive');
-          if(c){const t=S.players.find(p=>p!==cur); E.dispatch(S,cur.id,{type:'play',card:c,target:t.id},now); continue;}
+          if(c){const t=S.players.find(p=>p!==cur)||cur; E.dispatch(S,cur.id,{type:'play',card:c,target:t.id},now); continue;}
         }
         E.dispatch(S,cur.id,{type:'roll'},now);
       } else if(S.step==='pickDuel'){

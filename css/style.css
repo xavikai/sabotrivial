@@ -63,7 +63,7 @@ h2 { font-size: 1.5rem; }
 .logo-dice span:last-child { animation-delay: -1.2s; }
 @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-8deg); } 50% { transform: translateY(-10px) rotate(8deg); } }
 .logo h1 { font-size: 3.2rem; font-weight: 700; letter-spacing: -1px; text-shadow: 0 4px 0 rgba(0, 0, 0, .25); }
-.logo h1 small { display: block; font-size: 1.7rem; color: var(--accent); }
+.logo h1 small { display: block; font-size: 1.2rem; letter-spacing: 1px; color: var(--accent); }
 .tagline { opacity: .9; margin: 8px 0 0; }
 .foot { text-align: center; color: rgba(255, 255, 255, .6); font-size: .85rem; margin: 6px 0 0; }
 
@@ -330,3 +330,6 @@ h2 { font-size: 1.5rem; }
   .board { max-height: 72vh; max-width: calc(72vh * var(--cols) / var(--rows)); }
 }
 @media (prefers-reduced-motion: reduce) { * { animation-duration: .01s !important; transition-duration: .01s !important; } }
+.logo h1 .hl { color: var(--accent2); }
+.pbar[data-n="5"], .pbar[data-n="6"] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.token.small { width: 8%; }

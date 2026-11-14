@@ -1,5 +1,5 @@
 /*
-  Motor del Trivial de la Punyeta.
+  Motor del Sabotrivial.
   L'estat el guarda l'amfitrió (o el dispositiu en mode local) i és l'única font de veritat.
   dispatch(S, pid, action, now) i tick(S, now) modifiquen l'estat i retornen true si ha canviat.
 */
@@ -19,7 +19,7 @@
   const SQUARES = {
     start: { emoji: '🏁', name: 'Sortida', desc: 'Aquí comença tot.' },
     goal: { emoji: '🏆', name: 'Meta', desc: 'Qui hi arriba primer, guanya!' },
-    card: { emoji: '🃏', name: 'Carta', desc: 'Robes una carta de la punyeta.' },
+    card: { emoji: '🃏', name: 'Carta', desc: 'Robes una carta de sabotatge.' },
     rocket: { emoji: '🚀', name: 'Coet', desc: 'Avances 3 caselles més.' },
     slide: { emoji: '🍌', name: 'Relliscada', desc: 'Retrocedeixes 3 caselles.' },
     duel: { emoji: '⚔️', name: 'Duel', desc: 'Repta un rival: qui encerti (i més ràpid) avança 2 i l\'altre retrocedeix 2.' },
@@ -49,9 +49,9 @@
     3: { name: 'Expert', emoji: '🧠', desc: 'Adults' }
   };
 
-  const COLORS = ['#FF4D4D', '#3D7BFF', '#22B573', '#FFC233'];
+  const COLORS = ['#FF4D4D', '#3D7BFF', '#22B573', '#FFC233', '#A55EEA', '#FF8FCB'];
   const MAX_HAND = 4;
-  const MAX_PLAYERS = 4;
+  const MAX_PLAYERS = 6;
 
   // ---------- utilitats ----------
   const rnd = n => Math.floor(Math.random() * n);
@@ -190,7 +190,7 @@
     for (const k in CARDS) for (let i = 0; i < CARDS[k].w; i++) bag.push(k);
     const c = pick(bag);
     p.cards.push(c);
-    if (why !== false) say(S, emoji, why || `${label(p)} roba una carta de la punyeta`);
+    if (why !== false) say(S, emoji, why || `${label(p)} roba una carta de sabotatge`);
   }
 
   function removeCard(p, c) { const i = p.cards.indexOf(c); if (i >= 0) { p.cards.splice(i, 1); return true; } return false; }
@@ -317,7 +317,7 @@
     const sq = S.board[p.pos];
     switch (sq.type) {
       case 'goal': return checkWin(S, p);
-      case 'card': drawCard(S, p, `Casella de carta: ${label(p)} roba una carta de la punyeta`); break;
+      case 'card': drawCard(S, p, `Casella de carta: ${label(p)} roba una carta de sabotatge`); break;
       case 'rocket':
         moveBy(S, p, 3);
         say(S, '🚀', `Coet! ${label(p)} vola 3 caselles endavant`);
@@ -489,6 +489,7 @@
     const me = P(S, pid);
     const isHost = S.local || pid === S.hostId;
     const cur = S.players[S.turn];
+    if (!me && !['config', 'kick', 'start', 'restart', 'skipTurn'].includes(a.type)) return false;
     const myTurn = me && cur && cur.id === pid && S.phase === 'play' && S.mode === 'board';
 
     switch (a.type) {

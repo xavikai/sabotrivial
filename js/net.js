@@ -3,7 +3,7 @@
   No cal cap servidor propi: PeerJS fa servir el seu servidor públic només per presentar els navegadors.
 */
 (function (root) {
-  const PREFIX = 'trivial-punyeta-cat-v1-';
+  const PREFIX = 'sabotrivial-cat-v1-';
   const ALPHA = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
 
   function randomCode() { let s = ''; for (let i = 0; i < 4; i++) s += ALPHA[Math.floor(Math.random() * ALPHA.length)]; return s; }

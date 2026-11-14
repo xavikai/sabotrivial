@@ -1,4 +1,4 @@
-/* Interfície del Trivial de la Punyeta */
+/* Interfície del Sabotrivial */
 (function () {
   const E = window.Engine;
   const $ = (s, el = document) => el.querySelector(s);
@@ -64,7 +64,7 @@
           p.connected = true;
           if (S.phase === 'lobby') { p.name = String(msg.name || p.name).slice(0, 14); p.avatar = msg.avatar || p.avatar; p.level = +msg.level || p.level; }
         } else if (!E.addPlayer(S, { id: msg.pid, name: msg.name, avatar: msg.avatar, level: msg.level })) {
-          A.net.send(entry, { t: 'error', msg: S.phase !== 'lobby' ? 'La partida ja ha començat. Espera que acabi!' : 'La sala ja és plena (màxim 4 jugadors).' });
+          A.net.send(entry, { t: 'error', msg: S.phase !== 'lobby' ? 'La partida ja ha començat. Espera que acabi!' : 'La sala ja és plena (màxim 6 jugadors).' });
           return;
         }
         say('👋', `${msg.avatar || ''} ${msg.name || ''} s'ha connectat`);
@@ -173,7 +173,7 @@
     <div class="screen home">
       <div class="logo">
         <div class="logo-dice"><span>🎲</span><span>😈</span></div>
-        <h1>Trivial<small>de la Punyeta</small></h1>
+        <h1>Sabo<span class="hl">trivial</span><small>saber + sabotatge</small></h1>
         <p class="tagline">El trivial familiar on pots fer la guitza als altres</p>
       </div>
       ${sala ? `<button class="btn big primary pulse" data-a="go" data-to="join">🔗 Entrar a la sala ${esc(sala.toUpperCase())}</button>` : ''}
@@ -185,7 +185,7 @@
         <button class="btn small ghost" data-a="rules">📖 Com es juga</button>
         <button class="btn small ghost" data-a="mute">${Sound.muted ? '🔇 So apagat' : '🔊 So encès'}</button>
       </div>
-      <p class="foot">${countQuestions()} preguntes en català · De 1 a 4 jugadors</p>
+      <p class="foot">${countQuestions()} preguntes en català · D'1 a 6 jugadors</p>
     </div>`;
   }
 
@@ -263,7 +263,7 @@
       <h3 class="sect">Mode de joc</h3>
       <div class="modes">
         <button class="mode ${mode === 'board' ? 'sel' : ''}" ${dis} data-a="cfg" data-k="mode" data-val="board">
-          <span class="me">🎲</span><b>Taulell de la Punyeta</b><small>Per torns. Tira el dau, encerta, avança i fes la guitza amb cartes i caselles trampa. Qui arriba primer a la meta, guanya!</small>
+          <span class="me">🎲</span><b>Taulell del Sabotatge</b><small>Per torns. Tira el dau, encerta, avança i fes la guitza amb cartes i caselles trampa. Qui arriba primer a la meta, guanya!</small>
         </button>
         <button class="mode ${mode === 'quiz' ? 'sel' : ''}" ${dis} data-a="cfg" data-k="mode" data-val="quiz">
           <span class="me">⚡</span><b>Repte individual</b><small>Tothom respon alhora la seva pregunta. Punts per encert i rapidesa. Qui n'encerta més?</small>
@@ -301,8 +301,9 @@
         </div>`;
       wakeLock();
     }
-    $('#gtitle').innerHTML = v.mode === 'board' ? 'Taulell de la Punyeta' : `Repte · ${Math.min(v.round, v.settings.rounds)}/${v.settings.rounds}`;
+    $('#gtitle').innerHTML = v.mode === 'board' ? 'Taulell del Sabotatge' : `Repte · ${Math.min(v.round, v.settings.rounds)}/${v.settings.rounds}`;
     $('#pbar').innerHTML = playersBarHTML(v);
+    $('#pbar').dataset.n = v.players.length;
     if (v.mode === 'board') renderBoard(v); else renderScores(v);
     renderPanel(v);
     renderAsk(v);
@@ -390,7 +391,7 @@
     const g = geom(v.board.length);
     const groups = {};
     for (const p of v.players) { const pos = A.ui.tokenPos[p.id] ?? p.pos; (groups[pos] = groups[pos] || []).push(p.id); }
-    const offs = [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2]];
+    const offs = [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2], [0, 0], [0, -0.28]];
     const cur = v.players[v.turn];
     for (const p of v.players) {
       const el = document.getElementById('tk-' + p.id); if (!el) continue;
@@ -398,7 +399,7 @@
       const { x, y } = cellXY(pos, g);
       const grp = groups[pos];
       const k = grp.indexOf(p.id);
-      const [ox, oy] = grp.length > 1 ? offs[k % 4] : [0, 0];
+      const [ox, oy] = grp.length > 1 ? offs[k % 6] : [0, 0];
       el.style.left = ((x + 0.5 + ox) / g.cols * 100) + '%';
       el.style.top = ((y + 0.5 + oy) / g.rows * 100) + '%';
       el.classList.toggle('small', grp.length > 1);
@@ -411,7 +412,7 @@
     const main = $('#main');
     const sorted = v.players.slice().sort((a, b) => b.score - a.score);
     const max = Math.max(1, ...sorted.map(p => p.score));
-    const medals = ['🥇', '🥈', '🥉', '4️⃣'];
+    const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣'];
     main.innerHTML = `<div class="scoreboard">
       <div class="roundinfo">${v.step === 'intro' ? '⚡ Preparats?' : `Pregunta <b>${v.round}</b> de ${v.settings.rounds}${v.round === v.settings.rounds ? ' · ⭐ val doble!' : ''}`}</div>
       ${sorted.map((p, i) => `<div class="srow" style="--pc:${p.color}">
@@ -626,7 +627,7 @@
     const ranking = v.players.slice().sort((a, b) => v.mode === 'board' ? (b.pos - a.pos) : (b.score - a.score));
     const best = v.players.slice().sort((a, b) => b.stats.ok - a.stats.ok || (b.stats.ok / Math.max(1, b.stats.n)) - (a.stats.ok / Math.max(1, a.stats.n)))[0];
     const fastest = v.players.filter(p => p.stats.fast != null).sort((a, b) => a.stats.fast - b.stats.fast)[0];
-    const medals = ['🥇', '🥈', '🥉', '4️⃣'];
+    const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣'];
     const host = A.role !== 'client';
     return `<div class="screen end">
       <div class="winner" style="--pc:${w.color}">
@@ -709,7 +710,7 @@
       <div class="rules">
       <p>Cada jugador tria el seu <b>nivell</b> (🐣 Petit, 🦊 Mitjà o 🧠 Expert) i sempre rep preguntes del seu nivell. Així petits i grans poden competir de tu a tu!</p>
       <div class="cats">${cats}</div>
-      <h3>🎲 Taulell de la Punyeta</h3>
+      <h3>🎲 Taulell del Sabotatge</h3>
       <ol>
         <li>Al teu torn pots jugar <b>una carta</b> i després tires el dau.</li>
         <li>Veuràs a quina casella aniries. Respon la pregunta d'aquella categoria.</li>
@@ -718,11 +719,11 @@
         <li>Guanya qui arriba primer a la 🏆 <b>meta</b>.</li>
       </ol>
       <h3>Caselles especials</h3><ul class="deflist">${sq}</ul>
-      <h3>Cartes de la punyeta</h3><p>Comences amb 2 cartes i pots tenir-ne 4 com a màxim.</p><ul class="deflist">${cards}</ul>
+      <h3>Cartes de sabotatge</h3><p>Comences amb 2 cartes i pots tenir-ne 4 com a màxim.</p><ul class="deflist">${cards}</ul>
       <h3>⚡ Repte individual</h3>
       <p>Tothom respon alhora la seva pregunta. Encert = 100 punts + fins a 50 de rapidesa. Amb una ratxa de 3 encerts, +25. L'última pregunta val doble! Cada jugador té un comodí <b>✂️ 50%</b> i una <b>🦑 tinta de calamar</b> per tacar les respostes d'un rival.</p>
       <h3>📶 Jugar en línia</h3>
-      <p>Una persona crea la sala i comparteix el codi de 4 lletres. Els altres hi entren des del seu mòbil. Qui crea la sala ha de mantenir la pantalla oberta durant la partida (millor un ordinador o una tauleta).</p>
+      <p>Una persona crea la sala i comparteix el codi de 4 lletres (podeu ser de 1 a 6 jugadors). Els altres hi entren des del seu mòbil. Qui crea la sala ha de mantenir la pantalla oberta durant la partida (millor un ordinador o una tauleta).</p>
       </div>
       <button class="btn primary" data-a="close">Entesos!</button>`;
   }
@@ -732,7 +733,8 @@
     const v = A.v;
     let actions = '';
     if (playable) {
-      if (d.kind === 'attack') actions = `<p class="hint">Tria a qui li vols fer la guitza:</p><div class="targets">${v.players.filter(p => p.id !== pid).map(p =>
+      if (d.kind === 'attack' && v.players.length < 2) actions = `<p class="hint">Jugant sol no hi ha ningú a qui fer la guitza 😇</p>`;
+      else if (d.kind === 'attack') actions = `<p class="hint">Tria a qui li vols fer la guitza:</p><div class="targets">${v.players.filter(p => p.id !== pid).map(p =>
         `<button class="btn target" style="--pc:${p.color}" data-a="playcard" data-c="${c}" data-pid="${pid}" data-t="${p.id}">${lbl(p)} <small>📍${p.pos} · 🃏${p.cards.length}</small></button>`).join('')}</div>`;
       else actions = `<button class="btn big primary" data-a="playcard" data-c="${c}" data-pid="${pid}">Jugar la carta</button>`;
     } else if (d.kind === 'passive') actions = `<p class="hint">Aquesta carta funciona sola quan algú t'ataca.</p>`;
@@ -792,8 +794,8 @@
         break;
       case 'share': {
         const url = `${location.origin}${location.pathname}?sala=${A.code}`;
-        const text = `Vine a jugar al Trivial de la Punyeta! Codi de sala: ${A.code}`;
-        if (navigator.share) navigator.share({ title: 'Trivial de la Punyeta', text, url }).catch(() => { });
+        const text = `Vine a jugar al Sabotrivial! Codi de sala: ${A.code}`;
+        if (navigator.share) navigator.share({ title: 'Sabotrivial', text, url }).catch(() => { });
         else { navigator.clipboard && navigator.clipboard.writeText(url); showToastNow('📋', 'Enllaç copiat! Envia\'l a la família'); }
         break;
       }

@@ -1,5 +1,5 @@
 /*
-  Banc de preguntes del Trivial de la Punyeta.
+  Banc de preguntes del Sabotrivial.
   Format de cada línia:  Pregunta | Resposta correcta | Incorrecta 1 | Incorrecta 2 | Incorrecta 3
   Nivells: 1 = Petit (fins a ~11 anys), 2 = Mitjà (12-15 anys), 3 = Expert (adults)
   Per afegir preguntes, només cal afegir línies al bloc corresponent.
