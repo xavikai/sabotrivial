@@ -339,3 +339,6 @@ h2 { font-size: 1.5rem; }
 .theme.sel { background: #fff; color: var(--ink); border-color: var(--accent); box-shadow: var(--shadow); }
 .theme.friki.sel { border-color: var(--accent2); }
 .theme:disabled { cursor: default; } .theme:disabled:not(.sel) { opacity: .5; }
+.more { display: block; margin: 0 14px; text-align: center; padding: 9px; border-radius: 12px; background: #eef4ff; color: #1d4fd8; font-weight: 600; text-decoration: none; }
+.more.inline { display: inline-block; margin: 2px 0 0; padding: 2px 8px; font-size: .8rem; }
+.hq { display: block; } .hq small { color: var(--muted); }

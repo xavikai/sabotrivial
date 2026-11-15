@@ -173,6 +173,9 @@
       const part = a.parts[pid];
       part.correct = S.secret.ans[a.id + ':' + pid];
       part.ok = part.ans === part.correct;
+      S.hist = S.hist || [];
+      S.hist.unshift({ q: part.q, a: part.opts[part.correct], cat: a.cat, p: pid, ok: part.ok });
+      if (S.hist.length > 40) S.hist.length = 40;
       const p = P(S, pid);
       p.stats.n++;
       if (part.ok) {
@@ -479,7 +482,7 @@
   function startGame(S, now) {
     resetPlayers(S);
     S.players = shuffle(S.players);
-    S.log = []; S.winner = null; S.ask = null; S.round = 0; S.next = null;
+    S.hist = []; S.log = []; S.winner = null; S.ask = null; S.round = 0; S.next = null;
     S.phase = 'play';
     if (S.mode === 'board') {
       S.board = makeBoard(S.settings.len, themeCats(S));

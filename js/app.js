@@ -567,7 +567,7 @@
     if (a.reveal) {
       const res = part.ok ? `<div class="verdict ok">✅ Correcte!${part.pts ? ` <b>+${part.pts}</b>` : ''} <small>${sec(part.ms)}</small></div>`
         : part.ans === -1 ? `<div class="verdict ko">⌛ S'ha acabat el temps!</div>` : `<div class="verdict ko">❌ Incorrecte!</div>`;
-      foot = res + (a.order.length > 1 ? resultsHTML(a) : '');
+      foot = res + moreLink(part.q, part.opts[part.correct]) + (a.order.length > 1 ? resultsHTML(a) : '');
     } else {
       foot = `<div class="timer" data-dl="${part.deadline}" data-time="${part.time}" data-mine="${interactive ? 1 : 0}"><i></i><b></b></div>`;
       if (part.ans !== null && mine) foot += `<p class="hint center">Resposta enviada! Esperant els altres…</p>`;
@@ -586,6 +586,9 @@
     </div>`;
   }
 
+  function moreURL(q, ans) { return 'https://www.google.com/search?q=' + encodeURIComponent(q + ' ' + ans); }
+  function moreLink(q, ans, cls = '') { return `<a class="more ${cls}" href="${moreURL(q, ans)}" target="_blank" rel="noopener">🔎 Saber-ne més</a>`; }
+
   function resultsHTML(a) {
     return `<div class="results">${a.order.map(id => {
       const q = player(id), pt = a.parts[id];
@@ -602,7 +605,7 @@
       return `<div class="sumrow ${pt.ok ? 'ok' : 'ko'}">
           <div class="sumh"><b>${q.avatar} ${esc(q.name)}</b><span>${pt.ok ? '✅ ' + sec(pt.ms) : pt.ans === -1 ? '⌛ Temps!' : '❌'}${pt.pts ? ` <b>+${pt.pts}</b>` : ''}</span></div>
           <div class="sumq">${esc(pt.q)}</div>
-          <div class="suma">✔ ${esc(pt.opts[pt.correct])}${!pt.ok && pt.ans >= 0 ? ` <s>${esc(pt.opts[pt.ans])}</s>` : ''}</div>
+          <div class="suma">✔ ${esc(pt.opts[pt.correct])}${!pt.ok && pt.ans >= 0 ? ` <s>${esc(pt.opts[pt.ans])}</s>` : ''} ${moreLink(pt.q, pt.opts[pt.correct], 'inline')}</div>
         </div>`;
     }).join('')}</div></div>`;
   }
@@ -796,9 +799,14 @@
       case 'close': closeModal(); break;
       case 'rules': openModal(rulesHTML()); break;
       case 'mute': Sound.toggle(); const mb = $('#mutebtn'); if (mb) mb.textContent = Sound.muted ? '🔇' : '🔊'; if (A.screen === 'home') render(); break;
-      case 'log':
-        openModal(`<h2>📜 Què ha passat</h2><div class="loglist">${(A.v ? A.v.log : []).map(l => `<div><span>${l.e}</span> ${esc(l.t)}</div>`).join('') || '<p>Encara res!</p>'}</div><button class="btn primary" data-a="close">Tancar</button>`);
+      case 'log': {
+        const hist = (A.v && A.v.hist) || [];
+        const qs = hist.map(h => { const p = player(h.p); const c = E.CATS[h.cat] || {}; return `<div class="hq"><small>${c.emoji || ''} ${p ? p.avatar + ' ' + esc(p.name) : ''} ${h.ok ? '✅' : '❌'}</small><div>${esc(h.q)}</div><b>✔ ${esc(h.a)}</b> ${moreLink(h.q, h.a, 'inline')}</div>`; }).join('');
+        openModal(`<h2>📜 Historial</h2>
+          <h3>Preguntes que han sortit</h3><div class="loglist">${qs || '<p>Encara no n\'ha sortit cap.</p>'}</div>
+          <h3>Què ha passat</h3><div class="loglist">${(A.v ? A.v.log : []).map(l => `<div><span>${l.e}</span> ${esc(l.t)}</div>`).join('') || '<p>Encara res!</p>'}</div><button class="btn primary" data-a="close">Tancar</button>`);
         break;
+      }
       case 'share': {
         const url = `${location.origin}${location.pathname}?sala=${A.code}`;
         const text = `Vine a jugar al Sabotrivial! Codi de sala: ${A.code}`;
