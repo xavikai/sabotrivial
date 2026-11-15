@@ -260,6 +260,9 @@
       </div>`}
       <div class="slots">${slots.join('')}</div>
       ${addForm}
+      <h3 class="sect">Temàtica</h3>
+      <div class="themes">${Object.entries(E.THEMES).map(([k, t]) => `<button class="theme ${(set.theme || 'gen') === k ? 'sel' : ''} ${k === 'gen' ? 'gen' : 'friki'}" ${dis} data-a="cfg" data-k="theme" data-val="${k}"><span>${t.emoji}</span><b>${t.name}</b></button>`).join('')}</div>
+      <p class="hint">${(set.theme || 'gen') === 'gen' ? '🌍 Preguntes de cultura general per a tots els públics.' : '🤓 Mode friki: a veure qui en sap més! Cadascú juga igualment amb el seu nivell.'}</p>
       <h3 class="sect">Mode de joc</h3>
       <div class="modes">
         <button class="mode ${mode === 'board' ? 'sel' : ''}" ${dis} data-a="cfg" data-k="mode" data-val="board">
@@ -301,7 +304,9 @@
         </div>`;
       wakeLock();
     }
-    $('#gtitle').innerHTML = v.mode === 'board' ? 'Taulell del Sabotatge' : `Repte · ${Math.min(v.round, v.settings.rounds)}/${v.settings.rounds}`;
+    const th = E.THEMES[v.settings.theme] || E.THEMES.gen;
+    const thTag = v.settings.theme && v.settings.theme !== 'gen' ? `${th.emoji} ` : '';
+    $('#gtitle').innerHTML = thTag + (v.mode === 'board' ? 'Taulell del Sabotatge' : `Repte · ${Math.min(v.round, v.settings.rounds)}/${v.settings.rounds}`);
     $('#pbar').innerHTML = playersBarHTML(v);
     $('#pbar').dataset.n = v.players.length;
     if (v.mode === 'board') renderBoard(v); else renderScores(v);
@@ -720,6 +725,8 @@
       </ol>
       <h3>Caselles especials</h3><ul class="deflist">${sq}</ul>
       <h3>Cartes de sabotatge</h3><p>Comences amb 2 cartes i pots tenir-ne 4 com a màxim.</p><ul class="deflist">${cards}</ul>
+      <h3>🤓 Modes friki</h3>
+      <p>A la sala d'espera, qui crea la partida tria la <b>temàtica</b>: cultura general (per a tots els públics) o un mode friki, on totes les preguntes són d'un sol tema: ${E.FRIKI_KEYS.map(k => E.CATS[k].emoji + ' ' + E.CATS[k].name).join(', ')}, o la 🤓 barreja friki. Serveix per als dos modes de joc.</p>
       <h3>⚡ Repte individual</h3>
       <p>Tothom respon alhora la seva pregunta. Encert = 100 punts + fins a 50 de rapidesa. Amb una ratxa de 3 encerts, +25. L'última pregunta val doble! Cada jugador té un comodí <b>✂️ 50%</b> i una <b>🦑 tinta de calamar</b> per tacar les respostes d'un rival.</p>
       <h3>📶 Jugar en línia</h3>
@@ -799,7 +806,7 @@
         else { navigator.clipboard && navigator.clipboard.writeText(url); showToastNow('📋', 'Enllaç copiat! Envia\'l a la família'); }
         break;
       }
-      case 'cfg': act({ type: 'config', ...Object.assign({}, { mode: A.v.mode, len: A.v.settings.len, rounds: A.v.settings.rounds, time: A.v.settings.time }, { [d.k]: d.k === 'mode' ? d.val : +d.val }) }); Sound.click(); break;
+      case 'cfg': act({ type: 'config', ...Object.assign({}, { mode: A.v.mode, len: A.v.settings.len, rounds: A.v.settings.rounds, time: A.v.settings.time }, { theme: A.v.settings.theme || 'gen' }, { [d.k]: (d.k === 'mode' || d.k === 'theme') ? d.val : +d.val }) }); Sound.click(); break;
       case 'kick': act({ type: 'kick', id: d.id }); break;
       case 'ldav': A.localDraft.avatar = d.av; keepNameAndRender(); break;
       case 'ldlvl': A.localDraft.level = +d.lvl; keepNameAndRender(); break;

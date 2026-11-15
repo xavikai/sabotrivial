@@ -13,9 +13,19 @@
     art: { name: 'Art i Lletres', emoji: '🎨', color: '#9B59E0' },
     ent: { name: 'Pelis, Música i Jocs', emoji: '🎬', color: '#EE5A9C' },
     esp: { name: 'Esports i Lleure', emoji: '⚽', color: '#F28A30' },
-    act: { name: 'Actualitat', emoji: '📰', color: '#16A6A6' }
+    act: { name: 'Actualitat', emoji: '📰', color: '#16A6A6' },
+    vid: { name: 'Videojocs', emoji: '🎮', color: '#7C4DFF', friki: true },
+    cin: { name: 'Cinema', emoji: '🍿', color: '#E0443E', friki: true },
+    sag: { name: 'Sagues i superherois', emoji: '🦸', color: '#1E88E5', friki: true },
+    mus: { name: 'Música', emoji: '🎸', color: '#00A383', friki: true }
   };
-  const CAT_KEYS = Object.keys(CATS).filter(k => QUESTIONS[k]);
+  const CAT_KEYS = Object.keys(CATS).filter(k => QUESTIONS[k] && !CATS[k].friki);
+  const FRIKI_KEYS = Object.keys(CATS).filter(k => QUESTIONS[k] && CATS[k].friki);
+  // Temàtiques de la partida: 'gen' (cultura general), una de friki, o 'mix' (barreja friki)
+  const THEMES = { gen: { name: 'Cultura general', emoji: '🌍', desc: 'Per a tots els públics' } };
+  for (const k of FRIKI_KEYS) THEMES[k] = { name: CATS[k].name, emoji: CATS[k].emoji, desc: 'Mode friki' };
+  if (FRIKI_KEYS.length > 1) THEMES.mix = { name: 'Barreja friki', emoji: '🤓', desc: 'Totes les temàtiques friki' };
+  const themeCats = S => { const t = S.settings.theme; return t === 'mix' ? FRIKI_KEYS : FRIKI_KEYS.includes(t) ? [t] : CAT_KEYS; };
 
   const SQUARES = {
     start: { emoji: '🏁', name: 'Sortida', desc: 'Aquí comença tot.' },
@@ -74,7 +84,7 @@
     return {
       v: 1, local, hostId,
       phase: 'lobby', mode: 'board',
-      settings: { len: 36, rounds: 12, time: 25 },
+      settings: { len: 36, rounds: 12, time: 25, theme: 'gen' },
       players: [], board: [],
       turn: 0, step: null, until: 0,
       dice: null, target: null, cardUsed: false,
@@ -101,13 +111,13 @@
     return true;
   }
 
-  function makeBoard(len) {
+  function makeBoard(len, cats = CAT_KEYS) {
     const seq = ['card', 'rocket', 'duel', 'slide', 'card', 'all', 'quake', 'swap', 'card', 'slide', 'duel', 'rocket'];
     const b = [{ type: 'start' }];
     let c = 0, s = 0;
     for (let i = 1; i < len - 1; i++) {
       if (i % 4 === 0) b.push({ type: seq[s++ % seq.length] });
-      else b.push({ type: 'cat', cat: CAT_KEYS[c++ % CAT_KEYS.length] });
+      else b.push({ type: 'cat', cat: cats[c++ % cats.length] });
     }
     b.push({ type: 'goal' });
     // una mica de drama a prop de la meta
@@ -131,7 +141,7 @@
   }
 
   function startAsk(S, now, kind, pids, o = {}) {
-    const cat = o.cat || pick(CAT_KEYS);
+    const cat = o.cat || pick(themeCats(S));
     const ask = { id: ++S.askSeq, kind, cat, parts: {}, order: pids.slice(), reveal: false, by: o.by || null, target: o.target ?? null, double: !!o.double };
     for (const pid of pids) {
       const p = P(S, pid);
@@ -472,14 +482,14 @@
     S.log = []; S.winner = null; S.ask = null; S.round = 0; S.next = null;
     S.phase = 'play';
     if (S.mode === 'board') {
-      S.board = makeBoard(S.settings.len);
+      S.board = makeBoard(S.settings.len, themeCats(S));
       for (const p of S.players) { drawCard(S, p, false); drawCard(S, p, false); }
       S.turn = 0;
       say(S, '🎲', `Comença la partida! L'ordre l'ha decidit l'atzar: comença ${label(S.players[0])}`);
       beginTurn(S, now);
     } else {
       S.board = [];
-      S.quizCats = shuffle(CAT_KEYS);
+      S.quizCats = shuffle(themeCats(S));
       say(S, '⚡', `Comença el repte! ${S.settings.rounds} preguntes, i l'última val doble`);
       S.step = 'intro'; S.until = now + 2500;
     }
@@ -500,6 +510,7 @@
         if ([24, 36, 48].includes(+a.len)) S.settings.len = +a.len;
         if ([6, 12, 18].includes(+a.rounds)) S.settings.rounds = +a.rounds;
         if ([15, 25, 40].includes(+a.time)) S.settings.time = +a.time;
+        if (THEMES[a.theme]) S.settings.theme = a.theme;
         return true;
       case 'kick':
         if (!isHost || S.phase !== 'lobby' || a.id === S.hostId) return false;
@@ -624,7 +635,7 @@
     return c;
   }
 
-  const api = { CATS, CAT_KEYS, SQUARES, CARDS, LEVELS, COLORS, MAX_PLAYERS, createState, addPlayer, dispatch, tick, publicView, makeBoard };
+  const api = { CATS, CAT_KEYS, FRIKI_KEYS, THEMES, SQUARES, CARDS, LEVELS, COLORS, MAX_PLAYERS, createState, addPlayer, dispatch, tick, publicView, makeBoard };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Engine = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,10 +1,12 @@
 const E = require('../js/engine.js');
+let THEME='gen';
 function sim(mode, local, seedGames=200){
   let wins={}, turns=0, errs=0, maxSteps=0;
   for(let g=0; g<seedGames; g++){
     const S=E.createState({local, hostId:'a'});
     ['a','b','c','d'].forEach((id,i)=>E.addPlayer(S,{id,name:'P'+id,avatar:'🦊',level:1+(i%3)}));
-    E.dispatch(S,'a',{type:'config',mode,len:36,rounds:12,time:25},0);
+    E.dispatch(S,'a',{type:'config',mode,len:36,rounds:12,time:25,theme:THEME},0);
+    if(S.settings.theme!==THEME) throw 'theme';
     let now=1000; E.dispatch(S,'a',{type:'start'},now);
     let steps=0;
     while(S.phase==='play' && steps<20000){
@@ -36,6 +38,7 @@ function sim(mode, local, seedGames=200){
       const pv=E.publicView(S); if(pv.secret) throw 'leak';
       if(S.players.some(p=>p.pos<0||p.pos>=S.board.length&&mode==='board')) throw 'pos';
     }
+    if(THEME!=='gen'&&S.mode==='board'&&S.board.some(q=>q.type==='cat'&&!E.FRIKI_KEYS.includes(q.cat))) throw 'boardcat';
     if(S.phase!=='end') {console.log('STUCK',S.step,S.next,S.ask&&S.ask.kind); errs++; }
     maxSteps=Math.max(maxSteps,steps);
     wins[S.winner]=(wins[S.winner]||0)+1;
@@ -45,4 +48,4 @@ function sim(mode, local, seedGames=200){
   }
   console.log(mode, local?'local':'online', 'wins',JSON.stringify(wins),'avg simulated min',(turns/seedGames/60).toFixed(1),'errs',errs,'maxSteps',maxSteps);
 }
-sim('board',false); sim('board',true); sim('quiz',false); sim('quiz',true);
+for (const th of ['gen','vid','mix']) { THEME=th; console.log('--',th); sim('board',false); sim('board',true); sim('quiz',false); sim('quiz',true); }
