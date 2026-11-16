@@ -17,9 +17,7 @@ function sim(mode, local, seedGames=200){
           const c=cur.cards.find(c=>E.CARDS[c].kind!=='passive');
           if(c){const t=S.players.find(p=>p!==cur)||cur; E.dispatch(S,cur.id,{type:'play',card:c,target:t.id},now); continue;}
         }
-        E.dispatch(S,cur.id,{type:'roll'},now);
-      } else if(S.step==='pickDuel'){
-        E.dispatch(S,cur.id,{type:'duel',target:S.players.find(p=>p!==cur).id},now);
+        { const ts=E.targets(S,cur.id); if(!E.dispatch(S,cur.id,{type:'move',cell:ts[Math.floor(Math.random()*ts.length)]},now)) errs++; }
       } else if(S.step==='ask'){
         for(const pid in S.ask.parts){const pt=S.ask.parts[pid];
           if(pt.start===null) E.dispatch(S,pid,{type:'ready'},now);
@@ -36,9 +34,9 @@ function sim(mode, local, seedGames=200){
       }
       E.tick(S,now);
       const pv=E.publicView(S); if(pv.secret) throw 'leak';
-      if(S.players.some(p=>p.pos<0||p.pos>=S.board.length&&mode==='board')) throw 'pos';
+      if(mode==='board'&&S.phase==='play'&&S.players.some(p=>!S.board.some(c=>c.base&&c.owner===p.id))) throw 'base';
     }
-    if(THEME!=='gen'&&S.mode==='board'&&S.board.some(q=>q.type==='cat'&&!E.FRIKI_KEYS.includes(q.cat))) throw 'boardcat';
+    if(THEME!=='gen'&&S.mode==='board'&&S.board.some(q=>!E.FRIKI_KEYS.includes(q.cat))) throw 'boardcat';
     if(S.phase!=='end') {console.log('STUCK',S.step,S.next,S.ask&&S.ask.kind); errs++; }
     maxSteps=Math.max(maxSteps,steps);
     wins[S.winner]=(wins[S.winner]||0)+1;

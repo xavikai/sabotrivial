@@ -28,36 +28,31 @@
   const themeCats = S => { const t = S.settings.theme; return t === 'mix' ? FRIKI_KEYS : FRIKI_KEYS.includes(t) ? [t] : CAT_KEYS; };
 
   const SQUARES = {
-    start: { emoji: '🏁', name: 'Sortida', desc: 'Aquí comença tot.' },
-    goal: { emoji: '🏆', name: 'Meta', desc: 'Qui hi arriba primer, guanya!' },
-    card: { emoji: '🃏', name: 'Carta', desc: 'Robes una carta de sabotatge.' },
-    rocket: { emoji: '🚀', name: 'Coet', desc: 'Avances 3 caselles més.' },
-    slide: { emoji: '🍌', name: 'Relliscada', desc: 'Retrocedeixes 3 caselles.' },
-    duel: { emoji: '⚔️', name: 'Duel', desc: 'Repta un rival: qui encerti (i més ràpid) avança 2 i l\'altre retrocedeix 2.' },
-    quake: { emoji: '🌋', name: 'Terratrèmol', desc: 'Tots els altres retrocedeixen 2 caselles.' },
-    swap: { emoji: '🌪️', name: 'Remolí', desc: 'Et canvies de lloc amb qui va primer.' },
-    all: { emoji: '📣', name: 'Tothom respon', desc: 'Pregunta per a tothom: qui encerti avança 1.' }
+    base: { emoji: '👑', name: 'Base', desc: 'El punt de partida d\'un jugador. No es pot atacar.' },
+    card: { emoji: '🃏', name: 'Casella amb carta', desc: 'Qui la conquereix roba una carta de sabotatge.' },
+    star: { emoji: '⭐', name: 'Casella estrella', desc: 'Val 2 punts en lloc d\'1.' }
   };
+  const MAPS = { 24: { cols: 5, rows: 5, rounds: 8 }, 36: { cols: 6, rows: 6, rounds: 10 }, 48: { cols: 7, rows: 7, rounds: 12 } };
 
   const CARDS = {
-    banana: { emoji: '🍌', name: 'Pell de plàtan', desc: 'Un rival retrocedeix 3 caselles.', kind: 'attack', w: 3 },
+    banana: { emoji: '🧨', name: 'Dinamita', desc: 'Un rival perd una casella a l\'atzar (queda lliure).', kind: 'attack', w: 3 },
     freeze: { emoji: '🧊', name: 'Congelador', desc: 'Un rival perd el seu pròxim torn.', kind: 'attack', w: 2 },
-    swap: { emoji: '🔀', name: 'Canvi de lloc', desc: 'T\'intercanvies la posició amb un rival.', kind: 'attack', w: 1 },
+    swap: { emoji: '🏴‍☠️', name: 'Cop d\'estat', desc: 'Robes una casella a un rival sense respondre cap pregunta.', kind: 'attack', w: 1 },
     magnet: { emoji: '🧲', name: 'Imant', desc: 'Robes una carta a l\'atzar a un rival.', kind: 'attack', w: 2 },
-    bomb: { emoji: '💣', name: 'Pregunta bomba', desc: 'Un rival ha de respondre ara una pregunta més difícil. Si falla, retrocedeix 4.', kind: 'attack', w: 2 },
+    bomb: { emoji: '💣', name: 'Pregunta bomba', desc: 'Un rival ha de respondre ara una pregunta més difícil. Si falla, perd 2 caselles.', kind: 'attack', w: 2 },
     dizzy: { emoji: '🌀', name: 'Mareig', desc: 'Un rival veurà la seva pròxima pregunta cap per avall.', kind: 'attack', w: 2 },
     clock: { emoji: '⏱️', name: 'Rellotge boig', desc: 'Un rival només tindrà 8 segons a la pròxima pregunta.', kind: 'attack', w: 2 },
     ink: { emoji: '🦑', name: 'Tinta de calamar', desc: 'Les respostes del rival quedaran tacades de tinta uns segons.', kind: 'attack', w: 2 },
-    double: { emoji: '🎲', name: 'Doble dau', desc: 'Aquest torn tires dos daus.', kind: 'self', w: 2 },
+    double: { emoji: '⚡', name: 'Doble torn', desc: 'Aquest torn pots conquerir o atacar dues vegades.', kind: 'self', w: 2 },
     fifty: { emoji: '✂️', name: '50%', desc: 'A la teva pròxima pregunta s\'eliminen dues respostes dolentes.', kind: 'self', w: 2 },
     shield: { emoji: '🛡️', name: 'Escut', desc: 'Passiva: atura automàticament el pròxim atac que rebis.', kind: 'passive', w: 2 },
     mirror: { emoji: '🪞', name: 'Mirall', desc: 'Passiva: el pròxim atac que rebis rebota cap a qui te l\'ha llençat.', kind: 'passive', w: 1 }
   };
 
   const LEVELS = {
-    1: { name: 'Petit', emoji: '🐣', desc: 'Fins a 11 anys' },
-    2: { name: 'Mitjà', emoji: '🦊', desc: 'De 12 a 15 anys' },
-    3: { name: 'Expert', emoji: '🧠', desc: 'Adults' }
+    1: { name: 'Petit', emoji: '🟢', desc: 'Fins a 11 anys' },
+    2: { name: 'Mitjà', emoji: '🟡', desc: 'De 12 a 15 anys' },
+    3: { name: 'Expert', emoji: '🔴', desc: 'Adults' }
   };
 
   const COLORS = ['#FF4D4D', '#3D7BFF', '#22B573', '#FFC233', '#A55EEA', '#FF8FCB'];
@@ -70,8 +65,7 @@
   function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = rnd(i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const P = (S, id) => S.players.find(p => p.id === id);
-  const label = p => `${p.avatar} ${p.name}`;
-  const last = S => S.board.length - 1;
+  const label = p => p.name;
 
   function say(S, emoji, text) {
     S.toast = { n: (S.toast ? S.toast.n : 0) + 1, e: emoji, t: text };
@@ -102,7 +96,7 @@
     const used = S.players.map(p => p.color);
     const color = COLORS.find(c => !used.includes(c)) || COLORS[0];
     S.players.push({
-      id, name: String(name || 'Jugador').slice(0, 14), avatar: avatar || '🙂', color,
+      id, name: String(name || 'Jugador').slice(0, 14), avatar: '', color,
       level: clamp(+level || 2, 1, 3),
       pos: 0, cards: [], frozen: false, eff: {}, streak: 0,
       stats: { ok: 0, n: 0, fast: null }, score: 0, inkLeft: 1, fiftyLeft: 1,
@@ -111,18 +105,68 @@
     return true;
   }
 
-  function makeBoard(len, cats = CAT_KEYS) {
-    const seq = ['card', 'rocket', 'duel', 'slide', 'card', 'all', 'quake', 'swap', 'card', 'slide', 'duel', 'rocket'];
-    const b = [{ type: 'start' }];
-    let c = 0, s = 0;
-    for (let i = 1; i < len - 1; i++) {
-      if (i % 4 === 0) b.push({ type: seq[s++ % seq.length] });
-      else b.push({ type: 'cat', cat: cats[c++ % cats.length] });
-    }
-    b.push({ type: 'goal' });
-    // una mica de drama a prop de la meta
-    b[len - 3] = { type: 'slide' };
-    return b;
+  // Mapa hexagonal (files desplaçades). Cada casella: {cat, owner, base, card, star}
+  function neighbors(S, i) {
+    const { cols, rows } = S.map;
+    const c = i % cols, r = Math.floor(i / cols);
+    const d = r % 2 ? [[-1, 0], [1, 0], [0, -1], [1, -1], [0, 1], [1, 1]] : [[-1, 0], [1, 0], [-1, -1], [0, -1], [-1, 1], [0, 1]];
+    const out = [];
+    for (const [dc, dr] of d) { const x = c + dc, y = r + dr; if (x >= 0 && x < cols && y >= 0 && y < rows) out.push(y * cols + x); }
+    return out;
+  }
+
+  function makeMap(S) {
+    const m = MAPS[S.settings.len] || MAPS[36];
+    const cats = themeCats(S);
+    const n = m.cols * m.rows;
+    const order = shuffle(Array.from({ length: n }, (_, i) => i));
+    const board = Array.from({ length: n }, () => ({ cat: null, owner: null }));
+    order.forEach((i, k) => { board[i].cat = cats[k % cats.length]; });
+    S.map = { cols: m.cols, rows: m.rows, rounds: m.rounds };
+    S.board = board;
+    const mid = Math.floor(m.rows / 2), R = m.rows - 1, C = m.cols - 1;
+    const spots = [[0, 0], [C, R], [C, 0], [0, R], [0, mid], [C, mid]];
+    S.players.forEach((p, k) => { const [c, r] = spots[k]; const cell = board[r * m.cols + c]; cell.owner = p.id; cell.base = true; });
+    const free = shuffle(board.map((c, i) => i).filter(i => !board[i].base));
+    const nCard = Math.round(free.length / 6), nStar = Math.round(free.length / 9);
+    free.slice(0, nCard).forEach(i => { board[i].card = true; });
+    free.slice(nCard, nCard + nStar).forEach(i => { board[i].star = true; });
+    recount(S);
+  }
+
+  function recount(S) {
+    for (const p of S.players) p.pos = 0;
+    for (const c of S.board) if (c.owner) { const p = P(S, c.owner); if (p) p.pos += c.star ? 2 : 1; }
+  }
+
+  // Caselles que un jugador pot conquerir o atacar ara
+  function targets(S, pid) {
+    const set = new Set();
+    S.board.forEach((c, i) => { if (c.owner === pid) for (const j of neighbors(S, i)) { const t = S.board[j]; if (t.owner !== pid && !t.base) set.add(j); } });
+    if (!set.size) S.board.forEach((c, i) => { if (!c.owner) set.add(i); });
+    return [...set];
+  }
+
+  // Treu n caselles (no bases) a un jugador. Retorna quantes n'ha perdut.
+  function loseCells(S, p, n) {
+    const mine = shuffle(S.board.map((c, i) => i).filter(i => S.board[i].owner === p.id && !S.board[i].base));
+    const lost = mine.slice(0, n);
+    lost.forEach(i => { S.board[i].owner = null; });
+    recount(S);
+    return lost.length;
+  }
+
+  function takeCell(S, p, i) {
+    const cell = S.board[i];
+    cell.owner = p.id;
+    recount(S);
+    if (cell.card) { cell.card = false; drawCard(S, p, `Casella amb carta! ${label(p)} roba una carta de sabotatge`); }
+  }
+
+  function endBoard(S) {
+    const sorted = S.players.slice().sort((a, b) => b.pos - a.pos || b.stats.ok - a.stats.ok);
+    S.phase = 'end'; S.winner = sorted[0].id; S.step = null; S.ask = null;
+    say(S, '🏆', `${label(sorted[0])} domina el mapa amb ${sorted[0].pos} punts i guanya la partida!`);
   }
 
   // ---------- preguntes ----------
@@ -230,25 +274,14 @@
     return { victim: tgt, gainer: att, reflected: false };
   }
 
-  function moveBy(S, p, d) { p.pos = clamp(p.pos + d, 0, last(S)); }
-
-  function checkWin(S, p) {
-    if (p.pos >= last(S)) {
-      S.phase = 'end'; S.winner = p.id; S.step = null; S.ask = null;
-      say(S, '🏆', `${label(p)} arriba a la meta i guanya la partida!`);
-      return true;
-    }
-    return false;
-  }
-
   function applyCard(S, now, me, card, target) {
     const t = target ? P(S, target) : null;
     switch (card) {
       case 'banana': {
-        say(S, '🍌', `${label(me)} llença una pell de plàtan a ${label(t)}...`);
+        say(S, '🧨', `${label(me)} llença dinamita contra ${label(t)}...`);
         const r = hit(S, me, t); if (!r) return;
-        moveBy(S, r.victim, -3);
-        say(S, '🍌', `Patacada! ${label(r.victim)} rellisca 3 caselles enrere`);
+        if (loseCells(S, r.victim, 1)) say(S, '💥', `BOOM! ${label(r.victim)} perd una casella`);
+        else say(S, '🧨', `${label(r.victim)} només té la base, i la dinamita no hi pot fer res`);
         return;
       }
       case 'freeze': {
@@ -259,8 +292,12 @@
       }
       case 'swap': {
         const r = hit(S, me, t, { mirrorAsShield: true }); if (!r) return;
-        const a = me.pos; me.pos = t.pos; t.pos = a;
-        say(S, '🔀', `${label(me)} i ${label(t)} s'intercanvien el lloc!`);
+        const own = S.board.map((c, i) => i).filter(i => S.board[i].owner === t.id && !S.board[i].base);
+        if (!own.length) { say(S, '🏴‍☠️', `${label(t)} només té la base: el cop d'estat fracassa`); return; }
+        const near = own.filter(i => neighbors(S, i).some(j => S.board[j].owner === me.id));
+        const i = pick(near.length ? near : own);
+        say(S, '🏴‍☠️', `Cop d'estat! ${label(me)} pren una casella a ${label(t)} sense respondre res`);
+        takeCell(S, me, i);
         return;
       }
       case 'magnet': {
@@ -274,7 +311,7 @@
       }
       case 'bomb': {
         const r = hit(S, me, t); if (!r) return;
-        say(S, '💣', `${label(me)} llança una pregunta bomba a ${label(r.victim)}! Si falla, 4 caselles enrere`);
+        say(S, '💣', `${label(me)} llança una pregunta bomba a ${label(r.victim)}! Si falla, perd 2 caselles`);
         startAsk(S, now, 'bomb', [r.victim.id], { harder: true, by: me.id });
         return;
       }
@@ -298,7 +335,7 @@
       }
       case 'double':
         me.eff.double = true;
-        say(S, '🎲', `${label(me)} tirarà dos daus aquest torn!`);
+        say(S, '⚡', `${label(me)} té doble torn: podrà conquerir o atacar dues vegades!`);
         return;
       case 'fifty':
         me.eff.fifty = true;
@@ -317,62 +354,39 @@
       S.step = 'skip'; S.until = now + 2600;
       return;
     }
+    if (!targets(S, p.id).length) {
+      say(S, '🚫', `${label(p)} no té cap casella a l'abast i passa el torn`);
+      S.step = 'skip'; S.until = now + 2200;
+      return;
+    }
     S.step = 'pre';
   }
 
   function nextTurn(S, now) {
+    const cur = S.players[S.turn];
+    if (cur && cur.eff.double && S.step !== 'skip') { // doble torn: torna a jugar
+      delete cur.eff.double;
+      if (S.board.some(c => !c.owner) || targets(S, cur.id).length) {
+        say(S, '⚡', `Doble torn! ${label(cur)} torna a jugar`);
+        S.target = null; S.ask = null; S.step = 'pre';
+        return;
+      }
+    }
+    if (cur) delete cur.eff.double;
     S.turn = (S.turn + 1) % S.players.length;
+    if (S.turn === 0) {
+      S.round++;
+      if (S.round > S.map.rounds) return endBoard(S);
+      if (S.players.length > 1 && S.round % 2 === 1) {
+        say(S, '📣', `Ronda ${S.round}: pregunta llampec per a tothom! Qui encerti més de pressa guanya una carta`);
+        return pause(S, now, 2000, { k: 'askAll' });
+      }
+    }
+    if (S.board.every(c => c.owner) && S.players.length < 2) return endBoard(S);
     beginTurn(S, now);
   }
 
   function pause(S, now, ms, next) { S.step = 'pause'; S.until = now + ms; S.next = next; }
-
-  function applySquare(S, now, p) {
-    const sq = S.board[p.pos];
-    switch (sq.type) {
-      case 'goal': return checkWin(S, p);
-      case 'card': drawCard(S, p, `Casella de carta: ${label(p)} roba una carta de sabotatge`); break;
-      case 'rocket':
-        moveBy(S, p, 3);
-        say(S, '🚀', `Coet! ${label(p)} vola 3 caselles endavant`);
-        if (checkWin(S, p)) return true;
-        break;
-      case 'slide':
-        moveBy(S, p, -3);
-        say(S, '🍌', `Terra relliscós! ${label(p)} cau de cul i retrocedeix 3 caselles`);
-        break;
-      case 'duel':
-        if (S.players.length < 2) break;
-        say(S, '⚔️', `Duel! ${label(p)} ha de triar un rival`);
-        S.step = 'pickDuel';
-        return true;
-      case 'quake': {
-        say(S, '🌋', `Terratrèmol! Tothom menys ${label(p)} retrocedeix 2 caselles`);
-        for (const o of S.players) {
-          if (o === p) continue;
-          const r = hit(S, p, o);
-          if (r) moveBy(S, r.victim, -2);
-        }
-        break;
-      }
-      case 'swap': {
-        const others = S.players.filter(o => o !== p);
-        const leader = others.sort((a, b) => b.pos - a.pos)[0];
-        if (!leader || leader.pos <= p.pos) { say(S, '🌪️', `Remolí... però ${label(p)} ja va primer. No passa res!`); break; }
-        const r = hit(S, p, leader, { mirrorAsShield: true });
-        if (r) {
-          const a = p.pos; p.pos = leader.pos; leader.pos = a;
-          say(S, '🌪️', `Remolí! ${label(p)} es canvia de lloc amb ${label(leader)}, que anava primer`);
-        }
-        break;
-      }
-      case 'all':
-        say(S, '📣', `Pregunta per a tothom! Qui encerti avança 1 casella`);
-        pause(S, now, 1800, { k: 'askAll' });
-        return true;
-    }
-    return false;
-  }
 
   function afterAsk(S, now) {
     const a = S.ask;
@@ -386,17 +400,14 @@
       S.ask = null;
       if (part.ok) {
         cur.streak++;
-        cur.pos = S.target;
-        say(S, '✅', `${label(cur)} encerta i avança fins a la casella ${cur.pos}`);
+        say(S, '🚩', `${label(cur)} encerta i conquereix una casella!`);
+        takeCell(S, cur, S.target);
         if (cur.streak % 3 === 0) drawCard(S, cur, `Tres encerts seguits! ${label(cur)} guanya una carta`, '🔥');
-        if (checkWin(S, cur)) return;
-        // deixem que el moviment s'animi abans de l'efecte de la casella
-        pause(S, now, 1500, { k: 'square' });
       } else {
         cur.streak = 0;
-        say(S, '❌', part.ans === -1 ? `Temps esgotat! ${label(cur)} es queda on és` : `${label(cur)} falla i es queda on és`);
-        pause(S, now, 1500, { k: 'next' });
+        say(S, '❌', part.ans === -1 ? `Temps esgotat! ${label(cur)} no conquereix res` : `${label(cur)} falla i no conquereix res`);
       }
+      pause(S, now, 1600, { k: 'next' });
       return;
     }
     if (a.kind === 'bomb') {
@@ -406,55 +417,44 @@
         say(S, '💪', `${label(v)} desactiva la bomba! Com a premi, roba una carta`);
         drawCard(S, v, false);
       } else {
-        moveBy(S, v, -4);
-        say(S, '💥', `BOOM! ${label(v)} falla la pregunta bomba i retrocedeix 4 caselles`);
+        const n = loseCells(S, v, 2);
+        say(S, '💥', n ? `BOOM! ${label(v)} falla la pregunta bomba i perd ${n} ${n === 1 ? 'casella' : 'caselles'}` : `BOOM! ${label(v)} falla, però només té la base i no perd res`);
       }
       pause(S, now, 1500, { k: 'pre' });
       return;
     }
-    if (a.kind === 'duel') {
-      const [x, y] = a.order.map(id => P(S, id));
-      const px = a.parts[x.id], py = a.parts[y.id];
+    if (a.kind === 'duel') { // atac: a.order = [atacant, defensor]
+      const [att, def] = a.order.map(id => P(S, id));
+      const pa = a.parts[att.id], pd = a.parts[def.id];
       S.ask = null;
-      let win = null, lose = null;
-      if (px.ok && !py.ok) { win = x; lose = y; }
-      else if (py.ok && !px.ok) { win = y; lose = x; }
-      else if (px.ok && py.ok) { if (px.ms <= py.ms) { win = x; lose = y; } else { win = y; lose = x; } }
-      if (!win) { say(S, '🤝', `Ningú guanya el duel. Tothom es queda quiet`); pause(S, now, 1500, { k: 'next' }); return; }
-      moveBy(S, win, 2); moveBy(S, lose, -2);
-      say(S, '⚔️', `${label(win)} guanya el duel${px.ok && py.ok ? ' per velocitat' : ''}! Avança 2, i ${label(lose)} retrocedeix 2`);
-      drawCard(S, win, false);
-      if (checkWin(S, win)) return;
+      if (pa.ok && (!pd.ok || pa.ms <= pd.ms)) {
+        att.streak++;
+        say(S, '⚔️', `${label(att)} guanya l'atac${pd.ok ? ' per velocitat' : ''} i pren una casella a ${label(def)}!`);
+        takeCell(S, att, S.target);
+        if (att.streak % 3 === 0) drawCard(S, att, `Tres encerts seguits! ${label(att)} guanya una carta`, '🔥');
+      } else {
+        if (!pa.ok) att.streak = 0;
+        say(S, '🛡️', pd.ok ? `${label(def)} defensa la casella! L'atac de ${label(att)} fracassa` : `Ningú encerta: la casella continua sent de ${label(def)}`);
+      }
       pause(S, now, 1800, { k: 'next' });
       return;
     }
     if (a.kind === 'all') {
       S.ask = null;
       const oks = a.order.map(id => ({ p: P(S, id), part: a.parts[id] })).filter(o => o.part.ok).sort((m, n) => m.part.ms - n.part.ms);
-      if (!oks.length) { say(S, '🙈', `Ningú ha encertat la pregunta per a tothom!`); pause(S, now, 1500, { k: 'next' }); return; }
-      oks.forEach(o => moveBy(S, o.p, 1));
-      drawCard(S, oks[0].p, false);
-      say(S, '📣', `${oks.map(o => o.p.avatar).join(' ')} avancen 1 casella. ${label(oks[0].p)} ha respost més de pressa i guanya una carta!`);
-      for (const o of oks) if (checkWin(S, o.p)) return;
-      pause(S, now, 1800, { k: 'next' });
+      if (!oks.length) say(S, '🙈', `Ningú ha encertat la pregunta llampec!`);
+      else { drawCard(S, oks[0].p, false); say(S, '📣', `${label(oks[0].p)} ha estat qui ha encertat més de pressa i guanya una carta!`); }
+      pause(S, now, 1800, { k: 'begin' });
     }
   }
 
   function runNext(S, now) {
     const n = S.next; S.next = null;
-    const cur = S.players[S.turn];
     switch (n.k) {
       case 'next': return nextTurn(S, now);
+      case 'begin': return beginTurn(S, now);
       case 'pre': S.step = 'pre'; return;
-      case 'square':
-        if (applySquare(S, now, cur)) return; // la casella ha obert una altra fase
-        return pause(S, now, 1600, { k: 'next' });
-      case 'askAll':
-        return startAsk(S, now, 'all', S.players.map(p => p.id));
-      case 'ask': {
-        const sq = S.board[S.target];
-        return startAsk(S, now, 'turn', [cur.id], { cat: sq.type === 'cat' ? sq.cat : null });
-      }
+      case 'askAll': return startAsk(S, now, 'all', S.players.map(p => p.id));
     }
   }
 
@@ -485,10 +485,11 @@
     S.hist = []; S.log = []; S.winner = null; S.ask = null; S.round = 0; S.next = null;
     S.phase = 'play';
     if (S.mode === 'board') {
-      S.board = makeBoard(S.settings.len, themeCats(S));
+      makeMap(S);
+      S.round = 1;
       for (const p of S.players) { drawCard(S, p, false); drawCard(S, p, false); }
       S.turn = 0;
-      say(S, '🎲', `Comença la partida! L'ordre l'ha decidit l'atzar: comença ${label(S.players[0])}`);
+      say(S, '🚩', `Comença la conquesta! ${S.map.rounds} rondes. Comença ${label(S.players[0])}`);
       beginTurn(S, now);
     } else {
       S.board = [];
@@ -522,8 +523,7 @@
       case 'profile':
         if (!me || S.phase !== 'lobby') return false;
         if (a.name) me.name = String(a.name).slice(0, 14);
-        if (a.avatar) me.avatar = a.avatar;
-        if (a.level) me.level = clamp(+a.level, 1, 3);
+                if (a.level) me.level = clamp(+a.level, 1, 3);
         return true;
       case 'start':
         if (!isHost || S.phase !== 'lobby' || S.players.length < 1) return false;
@@ -536,7 +536,8 @@
         return true;
       case 'skipTurn':
         if (!isHost || S.phase !== 'play' || S.mode !== 'board') return false;
-        if (!['pre', 'pickDuel'].includes(S.step)) return false;
+        if (S.step !== 'pre') return false;
+        delete cur.eff.double;
         say(S, '⏭️', `Saltem el torn de ${label(cur)}`);
         nextTurn(S, now);
         return true;
@@ -554,21 +555,17 @@
         applyCard(S, now, me, a.card, a.target);
         return true;
       }
-      case 'roll': {
+      case 'move': { // conquerir una casella lliure o atacar-ne una d'un rival
         if (!myTurn || S.step !== 'pre') return false;
-        const d1 = 1 + rnd(6), d2 = me.eff.double ? 1 + rnd(6) : null;
-        delete me.eff.double;
-        S.dice = d2 ? [d1, d2] : [d1];
-        S.target = Math.min(me.pos + d1 + (d2 || 0), last(S));
-        S.step = 'rolling'; S.until = now + 1900; S.next = { k: 'ask' };
-        return true;
-      }
-      case 'duel': {
-        if (!myTurn || S.step !== 'pickDuel') return false;
-        const t = P(S, a.target);
-        if (!t || t === me) return false;
-        say(S, '⚔️', `${label(me)} repta ${label(t)} a un duel!`);
-        startAsk(S, now, 'duel', [me.id, t.id]);
+        const i = +a.cell, cell = S.board[i];
+        if (!cell || !targets(S, pid).includes(i)) return false;
+        S.target = i;
+        if (!cell.owner) startAsk(S, now, 'turn', [pid], { cat: cell.cat });
+        else {
+          const def = P(S, cell.owner);
+          say(S, '⚔️', `${label(me)} ataca una casella de ${label(def)}!`);
+          startAsk(S, now, 'duel', [pid, def.id], { cat: cell.cat });
+        }
         return true;
       }
       case 'ready': { // mode local: el jugador agafa el mòbil i comença el seu compte enrere
@@ -625,7 +622,7 @@
       if (step === 'reveal') afterAsk(S, now);
       else if (step === 'scores' || step === 'intro') nextQuizRound(S, now);
       else if (step === 'skip') nextTurn(S, now);
-      else if (step === 'rolling' || step === 'pause') runNext(S, now);
+      else if (step === 'pause') runNext(S, now);
       return true;
     }
     return false;
@@ -638,7 +635,7 @@
     return c;
   }
 
-  const api = { CATS, CAT_KEYS, FRIKI_KEYS, THEMES, SQUARES, CARDS, LEVELS, COLORS, MAX_PLAYERS, createState, addPlayer, dispatch, tick, publicView, makeBoard };
+  const api = { CATS, CAT_KEYS, FRIKI_KEYS, THEMES, SQUARES, CARDS, LEVELS, COLORS, MAX_PLAYERS, createState, addPlayer, dispatch, tick, publicView, targets, neighbors };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Engine = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -7,33 +7,33 @@ errors=[]
 async def mkpage(ctx, name):
     p=await ctx.new_page()
     await p.add_init_script(MEM)
-    await p.route('**/js/vendor/peerjs.min.js', lambda r: r.fulfill(body=FAKE, content_type='application/javascript'))
+    await p.route('**/js/vendor/peerjs.min.js*', lambda r: r.fulfill(body=FAKE, content_type='application/javascript'))
     await p.route('https://fonts.**', lambda r: r.abort())
     p.on('pageerror', lambda e: errors.append(f'{name}: {e}'))
     p.on('console', lambda m: errors.append(f'{name} console: {m.text}') if m.type=='error' else None)
     return p
 async def profile(p, name, av_idx, lvl):
     await p.fill('#pname', name)
-    await p.locator('#pavatars .av').nth(av_idx).click()
     await p.locator(f'#plevels [data-lvl="{lvl}"]').click()
 async def drive(pages, rounds):
     for _ in range(rounds):
         for p in pages:
-            for sel in ['[data-a="answer"]','[data-a="roll"]','[data-a="duel"]','[data-a="ready"]']:
-                loc=p.locator(sel)
-                n=await loc.count()
-                if n:
-                    try:
-                        if sel=='[data-a="roll"]' and random.random()<0.5:
+            try:
+                for sel in ['[data-a="answer"]','[data-a="ready"]','#modal [data-a="move"]']:
+                    loc=p.locator(sel); n=await loc.count()
+                    if n: await loc.nth(random.randrange(n)).click(timeout=1000); break
+                else:
+                    tg=p.locator('.hx.tg'); n=await tg.count()
+                    if n:
+                        if random.random()<0.4:
                             c=p.locator('.gcard.can')
                             if await c.count():
                                 await c.first.click(); await asyncio.sleep(0.2)
                                 t=p.locator('#modal [data-a="playcard"]')
-                                if await t.count(): await t.first.click(); await asyncio.sleep(0.3); break
-                        await loc.nth(random.randrange(n)).click(timeout=1000)
-                    except Exception as e: pass
-                    break
-        await asyncio.sleep(0.35)
+                                if await t.count(): await t.first.click(); await asyncio.sleep(0.3); continue
+                        await tg.nth(random.randrange(n)).dispatch_event('click')
+            except Exception as e: pass
+        await asyncio.sleep(0.3)
 async def main():
     async with async_playwright() as pw:
         b=await pw.chromium.launch()
@@ -48,7 +48,7 @@ async def main():
         code=(await host.locator('.roomcode b').inner_text()).strip()
         print('code',code)
         clients=[]
-        for i,(n,lv) in enumerate([('Mama',3),('Pol',2),('Laia',1)]):
+        for i,(n,lv) in enumerate([('Mama',3),('Pol',2),('Pau',1)]):
             c=await mkpage(ctx,n); await c.goto(BASE+'?sala='+code); await asyncio.sleep(0.3)
             await profile(c,n,i+2,lv); await c.click('[data-a="dojoin"]'); await asyncio.sleep(0.5)
             clients.append(c)
@@ -63,9 +63,9 @@ async def main():
             await drive(allp, 8)
             await allp[k%4].screenshot(path=f'/tmp/shots/06_board_{k}.png')
         # forçar escenari: posar un jugador a la vora de la meta
-        st=await host.evaluate('(()=>{const S=__TP.S;return {step:S.step,turn:S.turn,pos:S.players.map(p=>p.pos),cards:S.players.map(p=>p.cards)}})()')
+        st=await host.evaluate('(()=>{const S=__TP.S;return {step:S.step,turn:S.turn,round:S.round,pos:S.players.map(p=>p.pos)}})()')
         print(st)
-        await host.evaluate('(()=>{const S=__TP.S;S.players.forEach(p=>p.pos=Math.max(p.pos, S.board.length-3));})()')
+        await host.evaluate('(()=>{const S=__TP.S;S.round=S.map.rounds;})()')
         for _ in range(40):
             await drive(allp, 6)
             if await host.evaluate('__TP.S.phase')=='end': break

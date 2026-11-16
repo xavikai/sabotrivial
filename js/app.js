@@ -45,7 +45,7 @@
   function changed() {
     A.v = E.publicView(A.S);
     if (A.role === 'host' && A.net) A.net.broadcast({ t: 'state', s: A.v, now: Date.now() });
-    if (A.role === 'host' || A.role === 'local') store.set('tp_save', { role: A.role, code: A.code, S: A.S, t: Date.now() });
+    if (A.role === 'host' || A.role === 'local') store.set('tp_save2', { role: A.role, code: A.code, S: A.S, t: Date.now() });
     render();
   }
 
@@ -67,7 +67,7 @@
           A.net.send(entry, { t: 'error', msg: S.phase !== 'lobby' ? 'La partida ja ha començat. Espera que acabi!' : 'La sala ja és plena (màxim 6 jugadors).' });
           return;
         }
-        say('👋', `${msg.avatar || ''} ${msg.name || ''} s'ha connectat`);
+        say('👋', `${String(msg.name || '').slice(0, 14)} s'ha connectat`);
         changed();
       },
       onAction(pid, a) { if (A.S && E.dispatch(A.S, pid, a, Date.now())) changed(); },
@@ -138,8 +138,21 @@
   function fail(msg) { A.screen = 'error'; A.form.error = msg; A.v = null; A.role = null; render(); }
 
   // ---------------------------------------------------------------- render principal
+  // Fitxa de cada jugador: cercle del seu color amb la inicial (dues lletres si coincideixen)
+  function decorate(v) {
+    if (!v || !v.players) return;
+    const ini = v.players.map(p => (p.name || '?').trim().charAt(0).toUpperCase());
+    v.players.forEach((p, i) => {
+      const dup = ini.filter(x => x === ini[i]).length > 1;
+      const t = dup ? (p.name || '?').trim().slice(0, 2) : ini[i];
+      p.ini = t;
+      p.avatar = `<span class="ini${dup ? ' two' : ''}" style="background:${p.color}">${esc(t)}</span>`;
+    });
+  }
+
   function render() {
     const app = $('#app');
+    decorate(A.v);
     if (!A.v || A.screen !== 'game') {
       A.ui.boardSig = A.ui.panelSig = A.ui.askSig = null;
       document.body.dataset.screen = A.screen;
@@ -166,7 +179,7 @@
 
   // ---------------------------------------------------------------- pantalles inicials
   function homeHTML() {
-    const save = store.get('tp_save');
+    const save = store.get('tp_save2');
     const canResume = save && save.S && Date.now() - save.t < 12 * 3600e3 && save.S.phase !== 'end';
     const sala = new URLSearchParams(location.search).get('sala');
     return `
@@ -201,9 +214,6 @@
       <h2>${join ? '🔗 Unir-me a una partida' : '🎉 Crear una partida'}</h2>
       ${join ? `<label class="field"><span>Codi de la sala</span><input id="pcode" maxlength="4" autocomplete="off" autocapitalize="characters" value="${esc(sala.toUpperCase())}" placeholder="ABCD" class="codeinput"></label>` : ''}
       <label class="field"><span>Com et dius?</span><input id="pname" maxlength="14" value="${esc(prof.name)}" placeholder="El teu nom"></label>
-      <div class="field"><span>Tria el teu personatge</span>
-        <div class="avatars" id="pavatars">${AVATARS.map(a => `<button class="av ${a === prof.avatar ? 'sel' : ''}" data-a="pickav" data-av="${a}">${a}</button>`).join('')}</div>
-      </div>
       <div class="field"><span>Nivell de les preguntes</span>
         <div class="levels" id="plevels">${levelButtons(prof.level, 'picklvl')}</div>
       </div>
@@ -238,7 +248,6 @@
       <div class="card addp">
         <h3>➕ Afegir jugador</h3>
         <input id="lname" maxlength="14" placeholder="Nom del jugador">
-        <div class="avatars small">${AVATARS.map(a => `<button class="av ${a === d.avatar ? 'sel' : ''}" data-a="ldav" data-av="${a}">${a}</button>`).join('')}</div>
         <div class="levels">${levelButtons(d.level, 'ldlvl')}</div>
         <button class="btn primary" data-a="ladd">Afegir</button>
       </div>` : '';
@@ -266,14 +275,14 @@
       <h3 class="sect">Mode de joc</h3>
       <div class="modes">
         <button class="mode ${mode === 'board' ? 'sel' : ''}" ${dis} data-a="cfg" data-k="mode" data-val="board">
-          <span class="me">🎲</span><b>Taulell del Sabotatge</b><small>Per torns. Tira el dau, encerta, avança i fes la guitza amb cartes i caselles trampa. Qui arriba primer a la meta, guanya!</small>
+          <span class="me">🗺️</span><b>Conquesta</b><small>Per torns, sobre un mapa. Encerta per conquerir caselles, ataca les dels rivals i sabota'ls amb cartes. Guanya qui domina més territori!</small>
         </button>
         <button class="mode ${mode === 'quiz' ? 'sel' : ''}" ${dis} data-a="cfg" data-k="mode" data-val="quiz">
           <span class="me">⚡</span><b>Repte individual</b><small>Tothom respon alhora la seva pregunta. Punts per encert i rapidesa. Qui n'encerta més?</small>
         </button>
       </div>
       <div class="settings">
-        ${mode === 'board' ? `<div class="setrow"><span>Llargada</span>${opt('len', 24, 'Curt')}${opt('len', 36, 'Normal')}${opt('len', 48, 'Llarg')}</div>`
+        ${mode === 'board' ? `<div class="setrow"><span>Mapa</span>${opt('len', 24, 'Petit')}${opt('len', 36, 'Normal')}${opt('len', 48, 'Gran')}</div>`
         : `<div class="setrow"><span>Preguntes</span>${opt('rounds', 6, '6')}${opt('rounds', 12, '12')}${opt('rounds', 18, '18')}</div>`}
         <div class="setrow"><span>Temps</span>${opt('time', 15, '15 s')}${opt('time', 25, '25 s')}${opt('time', 40, '40 s')}</div>
       </div>
@@ -306,7 +315,7 @@
     }
     const th = E.THEMES[v.settings.theme] || E.THEMES.gen;
     const thTag = v.settings.theme && v.settings.theme !== 'gen' ? `${th.emoji} ` : '';
-    $('#gtitle').innerHTML = thTag + (v.mode === 'board' ? 'Taulell del Sabotatge' : `Repte · ${Math.min(v.round, v.settings.rounds)}/${v.settings.rounds}`);
+    $('#gtitle').innerHTML = thTag + (v.mode === 'board' ? `Conquesta · Ronda ${Math.min(v.round, v.map.rounds)}/${v.map.rounds}` : `Repte · ${Math.min(v.round, v.settings.rounds)}/${v.settings.rounds}`);
     $('#pbar').innerHTML = playersBarHTML(v);
     $('#pbar').dataset.n = v.players.length;
     if (v.mode === 'board') renderBoard(v); else renderScores(v);
@@ -330,10 +339,10 @@
       if (p.eff.clock) icons.push('⏱️');
       if (p.eff.ink) icons.push('🦑');
       if (p.eff.fifty) icons.push('✂️');
-      if (p.eff.double) icons.push('🎲');
+      if (p.eff.double) icons.push('⚡');
       const active = v.mode === 'board' && cur && cur.id === p.id;
       const info = v.mode === 'board'
-        ? `<span>📍${p.pos}</span><span>🃏${p.cards.length}</span>`
+        ? `<span>🚩${p.pos}</span><span>🃏${p.cards.length}</span>`
         : `<span>⭐${p.score}</span><span>✅${p.stats.ok}</span>`;
       return `<div class="pchip ${active ? 'active' : ''} ${p.connected ? '' : 'off'} ${p.id === A.me && A.role !== 'local' ? 'mine' : ''}" style="--pc:${p.color}">
         <span class="pav">${p.avatar}</span>
@@ -343,73 +352,57 @@
     }).join('');
   }
 
-  // ---------- taulell
-  function geom(len) { const cols = 6; return { cols, rows: Math.ceil(len / cols) }; }
-  function cellXY(i, g) { const row = Math.floor(i / g.cols); let col = i % g.cols; if (row % 2 === 1) col = g.cols - 1 - col; return { x: col, y: g.rows - 1 - row }; }
+  // ---------- mapa de conquesta
+  function hexGeom(m) { const s = 50, w = Math.sqrt(3) * s; return { s, w, W: w * (m.cols + 0.5), H: 1.5 * s * m.rows + 0.5 * s }; }
+  function hexCenter(i, m, g) { const c = i % m.cols, r = Math.floor(i / m.cols); return { x: g.w * (c + 0.5 * (r & 1)) + g.w / 2, y: 1.5 * g.s * r + g.s }; }
+  function myTargets(v) {
+    const cur = v.players[v.turn];
+    return (v.step === 'pre' && cur && isMine(cur.id)) ? E.targets(v, cur.id) : [];
+  }
 
   function renderBoard(v) {
     const main = $('#main');
-    const g = geom(v.board.length);
-    const sig = v.board.map(s => s.type + (s.cat || '')).join(',');
-    if (A.ui.boardSig !== sig) {
-      A.ui.boardSig = sig;
-      A.ui.tokenPos = {};
-      const cells = v.board.map((s, i) => {
-        const { x, y } = cellXY(i, g);
-        let bg, em, cls = s.type;
-        if (s.type === 'cat') { bg = E.CATS[s.cat].color; em = E.CATS[s.cat].emoji; }
-        else { em = E.SQUARES[s.type].emoji; bg = ''; }
-        return `<button class="sq ${cls}" data-a="sqinfo" data-i="${i}" style="grid-column:${x + 1};grid-row:${y + 1};${bg ? `--sc:${bg}` : ''}"><span class="sqe">${em}</span><span class="sqn">${i}</span></button>`;
-      }).join('');
-      main.innerHTML = `<div class="boardwrap"><div class="board" id="board" style="--cols:${g.cols};--rows:${g.rows}">${cells}<div id="tokens"></div></div></div>`;
-      $('#tokens').innerHTML = v.players.map(p => `<div class="token" id="tk-${p.id}" style="--pc:${p.color}">${p.avatar}</div>`).join('');
-    }
-    // casella objectiu
-    document.querySelectorAll('.sq.target').forEach(e => e.classList.remove('target'));
-    if (v.target != null && ['rolling', 'ask', 'reveal'].includes(v.step)) {
-      const t = document.querySelector(`.sq[data-i="${v.target}"]`); if (t) t.classList.add('target');
-    }
-    animateTokens(v);
+    const m = v.map, g = hexGeom(m);
+    const tg = myTargets(v);
+    const showTarget = ['ask', 'reveal'].includes(v.step) && v.ask && ['turn', 'duel'].includes(v.ask.kind) ? v.target : null;
+    const sig = JSON.stringify([v.board, tg, showTarget]);
+    if (A.ui.boardSig === sig) return;
+    const prev = A.ui.owners || [];
+    A.ui.boardSig = sig;
+    const pts = []; for (let k = 0; k < 6; k++) { const a = Math.PI / 180 * (60 * k - 30); pts.push((g.s * 0.95 * Math.cos(a)).toFixed(1) + ',' + (g.s * 0.95 * Math.sin(a)).toFixed(1)); }
+    const poly = pts.join(' ');
+    const cells = v.board.map((c, i) => {
+      const { x, y } = hexCenter(i, m, g);
+      const owner = c.owner && player(c.owner);
+      const cls = ['hx'];
+      if (owner) cls.push('own'); if (tg.includes(i)) cls.push('tg'); if (showTarget === i) cls.push('now');
+      if (prev.length && prev[i] !== c.owner) cls.push('chg');
+      const fill = owner ? owner.color : 'rgba(255,255,255,.13)';
+      const main = c.base ? '👑' : E.CATS[c.cat].emoji;
+      const badge = c.card ? '🃏' : c.star ? '⭐' : '';
+      return `<g class="${cls.join(' ')}" data-a="cell" data-i="${i}" transform="translate(${x.toFixed(1)},${y.toFixed(1)})">
+        <polygon points="${poly}" fill="${fill}"/>
+        <text class="hxe" y="${badge ? 4 : 12}">${main}</text>
+        ${badge ? `<text class="hxb" y="34">${badge}</text>` : ''}
+        ${owner && !c.base ? `<text class="hxi" y="-22">${esc(owner.ini)}</text>` : ''}
+      </g>`;
+    }).join('');
+    A.ui.owners = v.board.map(c => c.owner);
+    main.innerHTML = `<div class="boardwrap"><svg class="hexmap" viewBox="0 0 ${g.W.toFixed(0)} ${g.H.toFixed(0)}" style="max-width:min(100%, calc(60vh * ${(g.W / g.H).toFixed(3)}))">${cells}</svg></div>`;
   }
 
-  function animateTokens(v) {
-    clearInterval(A.ui.hopTimer);
-    const step = () => {
-      let moving = false;
-      for (const p of v.players) {
-        const cur = A.ui.tokenPos[p.id];
-        if (cur === undefined) { A.ui.tokenPos[p.id] = p.pos; continue; }
-        if (cur !== p.pos) {
-          moving = true;
-          A.ui.tokenPos[p.id] = Math.abs(p.pos - cur) > 7 ? p.pos : cur + Math.sign(p.pos - cur);
-          Sound.hop();
-        }
-      }
-      placeTokens(v);
-      if (!moving) clearInterval(A.ui.hopTimer);
-    };
-    step();
-    A.ui.hopTimer = setInterval(step, 210);
-  }
-
-  function placeTokens(v) {
-    const g = geom(v.board.length);
-    const groups = {};
-    for (const p of v.players) { const pos = A.ui.tokenPos[p.id] ?? p.pos; (groups[pos] = groups[pos] || []).push(p.id); }
-    const offs = [[-0.2, -0.2], [0.2, -0.2], [-0.2, 0.2], [0.2, 0.2], [0, 0], [0, -0.28]];
-    const cur = v.players[v.turn];
-    for (const p of v.players) {
-      const el = document.getElementById('tk-' + p.id); if (!el) continue;
-      const pos = A.ui.tokenPos[p.id] ?? p.pos;
-      const { x, y } = cellXY(pos, g);
-      const grp = groups[pos];
-      const k = grp.indexOf(p.id);
-      const [ox, oy] = grp.length > 1 ? offs[k % 6] : [0, 0];
-      el.style.left = ((x + 0.5 + ox) / g.cols * 100) + '%';
-      el.style.top = ((y + 0.5 + oy) / g.rows * 100) + '%';
-      el.classList.toggle('small', grp.length > 1);
-      el.classList.toggle('active', cur && cur.id === p.id);
-    }
+  function cellModal(i) {
+    const v = A.v, c = v.board[i];
+    const cat = E.CATS[c.cat], owner = c.owner && player(c.owner), cur = v.players[v.turn];
+    const can = myTargets(v).includes(i);
+    const extra = c.base ? E.SQUARES.base : c.card ? E.SQUARES.card : c.star ? E.SQUARES.star : null;
+    let action = '';
+    if (can && !owner) action = `<button class="btn big primary" data-a="move" data-i="${i}">🚩 Conquerir-la</button><p class="hint">Hauràs de respondre una pregunta de ${cat.name}.</p>`;
+    else if (can) action = `<button class="btn big warn" data-a="move" data-i="${i}">⚔️ Atacar ${esc(owner.name)}</button><p class="hint">Tots dos respondreu una pregunta de ${cat.name}. Te la quedes si encertes i l'altre falla, o si encerteu tots dos i tu ets més ràpid.</p>`;
+    else if (v.step === 'pre' && isMine(cur.id)) action = `<p class="hint">${c.base ? 'Les bases no es poden atacar.' : c.owner === cur.id ? 'Aquesta casella ja és teva.' : 'Només pots anar a caselles que toquin el teu territori.'}</p>`;
+    openModal(`<div class="bigcard"><div class="bce">${c.base ? '👑' : cat.emoji}</div><h2>${c.base ? 'Base' : cat.name}</h2>
+      <p>${owner ? `Territori de ${lbl(owner)}` : 'Casella lliure'}${c.star ? ' · val 2 punts' : ''}</p>${extra ? `<p>${extra.emoji} ${extra.desc}</p>` : ''}</div>
+      ${action}<button class="btn ghost" data-a="close">Tancar</button>`);
   }
 
   // ---------- marcador del repte
@@ -432,13 +425,10 @@
   function renderPanel(v) {
     const html = v.mode === 'board' ? boardPanelHTML(v) : quizPanelHTML(v);
     if (html !== A.ui.panelSig) { A.ui.panelSig = html; $('#panel').innerHTML = html; }
-    if (v.step === 'rolling' && A.ui.rolledSig !== v.log.length + ':' + v.turn) {
-      A.ui.rolledSig = v.log.length + ':' + v.turn; Sound.dice();
-    }
   }
 
   function handHTML(p, playable, used) {
-    if (!p.cards.length) return `<div class="hand empty">Sense cartes. Cau a una casella 🃏 per robar-ne!</div>`;
+    if (!p.cards.length) return `<div class="hand empty">Sense cartes. Conquereix una casella 🃏 per robar-ne!</div>`;
     return `<div class="hand">${p.cards.map((c, i) => {
       const d = E.CARDS[c];
       const can = playable && !used && d.kind !== 'passive';
@@ -450,28 +440,16 @@
     const cur = v.players[v.turn];
     const mine = isMine(cur.id);
     const me = player(A.me);
-    const hostSkip = A.role === 'host' && !cur.connected && ['pre', 'pickDuel'].includes(v.step)
+    const hostSkip = A.role === 'host' && !cur.connected && v.step === 'pre'
       ? `<button class="btn small warn" data-a="skip">⏭️ ${lbl(cur)} està desconnectat: saltar el torn</button>` : '';
     switch (v.step) {
       case 'pre':
         if (mine) return `
           <div class="turnhead" style="--pc:${cur.color}">${A.role === 'local' ? `Torn de ${lbl(cur)}` : '🎯 Et toca!'}</div>
           ${handHTML(cur, true, v.cardUsed)}
-          <p class="hint">${v.cardUsed ? 'Ja has jugat una carta aquest torn.' : 'Pots jugar una carta abans de tirar (toca-la per veure-la).'}</p>
-          <button class="btn big primary roll" data-a="roll">🎲 Tira el dau</button>`;
+          <p class="hint">👉 <b>Toca una casella il·luminada</b> del mapa per conquerir-la o atacar-la.${v.cardUsed ? '' : ' Abans pots jugar una carta.'}</p>`;
         return `<div class="turnhead other" style="--pc:${cur.color}">Torn de ${lbl(cur)}…</div>
           ${me ? `<div class="mylabel">Les teves cartes</div>${handHTML(me, false)}` : ''}${hostSkip}`;
-      case 'rolling': {
-        const sq = v.board[v.target];
-        const what = sq.type === 'cat' ? `${E.CATS[sq.cat].emoji} ${E.CATS[sq.cat].name}` : `${E.SQUARES[sq.type].emoji} ${E.SQUARES[sq.type].name}`;
-        return `<div class="dicebox">${v.dice.map((d, i) => `<div class="die rolling" style="animation-delay:${i * 80}ms" data-v="${d}">${dieFace(d)}</div>`).join('')}</div>
-          <p class="hint center">${lbl(cur)} treu un <b>${v.dice.reduce((a, b) => a + b, 0)}</b>. Si encerta, anirà a la casella <b>${v.target}</b> · ${what}</p>`;
-      }
-      case 'pickDuel':
-        if (mine) return `<div class="turnhead" style="--pc:${cur.color}">⚔️ Tria contra qui vols fer el duel</div>
-          <div class="targets">${v.players.filter(p => p.id !== cur.id).map(p => `<button class="btn target" style="--pc:${p.color}" data-a="duel" data-id="${p.id}">${lbl(p)} <small>📍${p.pos}</small></button>`).join('')}</div>
-          <p class="hint">Qui encerti avança 2. Si encerteu tots dos, guanya qui respongui més de pressa.</p>`;
-        return `<div class="turnhead other">⚔️ ${lbl(cur)} està triant rival per al duel…</div>${hostSkip}`;
       case 'ask': case 'reveal':
         return `<div class="turnhead other">🤔 Pregunta en joc…</div>`;
       default: {
@@ -641,12 +619,12 @@
       <div class="winner" style="--pc:${w.color}">
         <div class="crown">👑</div><div class="wav">${w.avatar}</div>
         <h1>${esc(w.name)} guanya!</h1>
-        <p>${v.mode === 'board' ? 'Ha arribat primer a la meta 🏆' : `${w.score} punts al repte ⚡`}</p>
+        <p>${v.mode === 'board' ? `Domina el mapa amb ${w.pos} punts 🚩` : `${w.score} punts al repte ⚡`}</p>
       </div>
       <div class="card">
         <h3>Classificació</h3>
         ${ranking.map((p, i) => `<div class="rrow" style="--pc:${p.color}"><span>${medals[i]}</span><span class="pav">${p.avatar}</span><b>${esc(p.name)}</b>
-          <span class="rstat">${v.mode === 'board' ? `📍${p.pos}` : `⭐${p.score}`}</span>
+          <span class="rstat">${v.mode === 'board' ? `🚩${p.pos}` : `⭐${p.score}`}</span>
           <span class="rstat">✅ ${p.stats.ok}/${p.stats.n}${p.stats.n ? ` (${Math.round(p.stats.ok / p.stats.n * 100)}%)` : ''}</span></div>`).join('')}
       </div>
       <div class="awards">
@@ -671,7 +649,7 @@
   }
 
   // ---------------------------------------------------------------- avisos
-  const ATTACK = ['🍌', '💣', '🧊', '🌀', '⏱️', '🦑', '🔀', '🧲', '🌋', '🌪️', '💥', '⚔️'];
+  const ATTACK = ['🧨', '🏴‍☠️', '💣', '🧊', '🌀', '⏱️', '🦑', '🔀', '🧲', '🌋', '🌪️', '💥', '⚔️'];
   function handleToasts(v) {
     if (A.ui.toastPhase !== v.phase) { A.ui.toastPhase = v.phase; A.ui.queue = []; }
     if (!v.toast) { A.ui.toastN = 0; return; }
@@ -711,20 +689,21 @@
   function closeModal() { const m = $('#modal'); m.classList.add('hidden'); m.innerHTML = ''; }
 
   function rulesHTML() {
-    const sq = Object.entries(E.SQUARES).filter(([k]) => !['start'].includes(k)).map(([k, s]) => `<li><span>${s.emoji}</span><b>${s.name}</b> ${s.desc}</li>`).join('');
+    const sq = Object.entries(E.SQUARES).map(([k, s]) => `<li><span>${s.emoji}</span><b>${s.name}</b> ${s.desc}</li>`).join('');
     const cards = Object.values(E.CARDS).map(c => `<li><span>${c.emoji}</span><b>${c.name}</b> ${c.desc}</li>`).join('');
     const cats = E.CAT_KEYS.map(k => E.CATS[k]).map(c => `<span class="catpill" style="--cc:${c.color}">${c.emoji} ${c.name}</span>`).join('');
     return `<h2>📖 Com es juga</h2>
       <div class="rules">
-      <p>Cada jugador tria el seu <b>nivell</b> (🐣 Petit, 🦊 Mitjà o 🧠 Expert) i sempre rep preguntes del seu nivell. Així petits i grans poden competir de tu a tu!</p>
+      <p>Cada jugador tria el seu <b>nivell</b> (${Object.values(E.LEVELS).map(l => l.emoji + ' ' + l.name).join(', ')}) i sempre rep preguntes del seu nivell. Així petits i grans poden competir de tu a tu!</p>
       <div class="cats">${cats}</div>
-      <h3>🎲 Taulell del Sabotatge</h3>
+      <h3>🗺️ Conquesta</h3>
       <ol>
-        <li>Al teu torn pots jugar <b>una carta</b> i després tires el dau.</li>
-        <li>Veuràs a quina casella aniries. Respon la pregunta d'aquella categoria.</li>
-        <li><b>Si encertes</b>, avances. <b>Si falles</b>, et quedes on ets.</li>
-        <li>Tres encerts seguits = una carta de regal 🔥.</li>
-        <li>Guanya qui arriba primer a la 🏆 <b>meta</b>.</li>
+        <li>Cada jugador comença amb una 👑 <b>base</b> en un extrem del mapa.</li>
+        <li>Al teu torn pots jugar <b>una carta</b> i després tries una casella que toqui el teu territori.</li>
+        <li><b>Casella lliure:</b> respon una pregunta de la seva categoria. Si l'encertes, és teva.</li>
+        <li><b>Casella d'un rival:</b> l'ataques. Tots dos responeu; te la quedes si encertes i l'altre falla, o si encerteu tots dos i tu ets més ràpid.</li>
+        <li>Tres encerts seguits = una carta de regal 🔥. Cada dues rondes hi ha una <b>pregunta llampec</b> per a tothom: qui l'encerta més de pressa guanya una carta.</li>
+        <li>Quan s'acaben les rondes, guanya qui té més punts de territori (1 per casella, 2 per les ⭐).</li>
       </ol>
       <h3>Caselles especials</h3><ul class="deflist">${sq}</ul>
       <h3>Cartes de sabotatge</h3><p>Comences amb 2 cartes i pots tenir-ne 4 com a màxim.</p><ul class="deflist">${cards}</ul>
@@ -745,7 +724,7 @@
     if (playable) {
       if (d.kind === 'attack' && v.players.length < 2) actions = `<p class="hint">Jugant sol no hi ha ningú a qui fer la guitza 😇</p>`;
       else if (d.kind === 'attack') actions = `<p class="hint">Tria a qui li vols fer la guitza:</p><div class="targets">${v.players.filter(p => p.id !== pid).map(p =>
-        `<button class="btn target" style="--pc:${p.color}" data-a="playcard" data-c="${c}" data-pid="${pid}" data-t="${p.id}">${lbl(p)} <small>📍${p.pos} · 🃏${p.cards.length}</small></button>`).join('')}</div>`;
+        `<button class="btn target" style="--pc:${p.color}" data-a="playcard" data-c="${c}" data-pid="${pid}" data-t="${p.id}">${lbl(p)} <small>🚩${p.pos} · 🃏${p.cards.length}</small></button>`).join('')}</div>`;
       else actions = `<button class="btn big primary" data-a="playcard" data-c="${c}" data-pid="${pid}">Jugar la carta</button>`;
     } else if (d.kind === 'passive') actions = `<p class="hint">Aquesta carta funciona sola quan algú t'ataca.</p>`;
     else actions = `<p class="hint">La podràs jugar al teu torn, abans de tirar el dau.</p>`;
@@ -785,7 +764,7 @@
         break;
       }
       case 'resume': {
-        const save = store.get('tp_save');
+        const save = store.get('tp_save2');
         if (!save) return;
         if (save.role === 'local') startLocal(save.S);
         else { A.code = save.code; startHost(save.S); }
@@ -834,6 +813,8 @@
       case 'restart': act({ type: 'restart' }); break;
       case 'skip': act({ type: 'skipTurn' }); break;
       case 'roll': act({ type: 'roll' }, A.v.players[A.v.turn].id); break;
+      case 'cell': cellModal(+d.i); Sound.click(); break;
+      case 'move': closeModal(); act({ type: 'move', cell: +d.i }, A.v.players[A.v.turn].id); break;
       case 'card': cardModal(d.c, d.pid, d.play === '1'); Sound.click(); break;
       case 'playcard': closeModal(); act({ type: 'play', card: d.c, target: d.t || null }, d.pid); break;
       case 'duel': act({ type: 'duel', target: d.id }, A.v.players[A.v.turn].id); break;

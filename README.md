@@ -12,8 +12,8 @@ Un trivial familiar en català per jugar en línia d'1 a 6 persones, cadascú de
 - Els altres entren a la mateixa web, premen **Unir-me a una partida** i escriuen el codi (o obren l'enllaç que es pot compartir).
 - Cada jugador tria el seu **nivell**: 🐣 Petit (fins a 11 anys), 🦊 Mitjà (12-15) o 🧠 Expert (adults). Les preguntes s'adapten al nivell de cadascú.
 
-### 🎲 Taulell del Sabotatge
-Joc per torns: tires el dau, respons una pregunta de la categoria de la casella i, si l'encertes, hi avances. Hi ha caselles trampa (relliscades, terratrèmols, remolins, duels…) i **cartes de sabotatge** per fer la guitza als altres: pell de plàtan, congelador, pregunta bomba, mareig (la pregunta surt cap per avall), tinta de calamar, imant, escut, mirall… Guanya qui arriba primer a la meta.
+### 🗺️ Conquesta
+Joc per torns sobre un mapa de caselles hexagonals. Cada jugador comença amb una base; al seu torn tria una casella que toqui el seu territori i respon una pregunta de la categoria d'aquella casella. Si la casella és lliure i encerta, la conquereix; si és d'un rival, l'ataca i tots dos responen (guanya qui encerta, o el més ràpid si encerten tots dos). Hi ha **cartes de sabotatge** per fer la guitza als altres: dinamita, congelador, pregunta bomba, mareig (la pregunta surt cap per avall), tinta de calamar, imant, cop d'estat, escut, mirall… Quan s'acaben les rondes, guanya qui té més territori.
 
 ### ⚡ Repte individual
 Tothom respon alhora la seva pregunta. Punts per encert i per rapidesa, bonus per ratxa i l'última pregunta val doble. Al final es veu qui n'ha encertat més.
